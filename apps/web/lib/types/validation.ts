@@ -256,6 +256,72 @@ export const rentAgreementUpdateSchema = rentAgreementInsertSchema
   .partial()
 
 // ──────────────────────────────────────────────────────────────
+// Conversation Schemas
+// ──────────────────────────────────────────────────────────────
+
+export const conversationInsertSchema = z
+  .object({
+    id: uuidSchema.optional(),
+    user1_id: uuidSchema,
+    user2_id: uuidSchema,
+    listing_id: uuidSchema.optional().nullable(),
+    last_message: z.string().optional().nullable(),
+    last_message_at: isoTimestampSchema.optional().nullable(),
+    last_message_sender: uuidSchema.optional().nullable(),
+  })
+  .refine((data) => data.user1_id !== data.user2_id, {
+    message: 'Users cannot have a conversation with themselves',
+    path: ['user2_id'],
+  })
+  .refine((data) => data.user1_id < data.user2_id, {
+    message: 'user1_id must be less than user2_id (enforce canonical ordering)',
+    path: ['user1_id'],
+  })
+
+export const conversationUpdateSchema = conversationInsertSchema
+  .omit({ id: true, user1_id: true, user2_id: true })
+  .partial()
+
+// ──────────────────────────────────────────────────────────────
+// Conversation Message Schemas
+// ──────────────────────────────────────────────────────────────
+
+export const messageTypeSchema = z.enum([
+  'text',
+  'image',
+  'payment_request',
+  'agreement_invite',
+])
+
+export const conversationMessageInsertSchema = z.object({
+  id: uuidSchema.optional(),
+  conversation_id: uuidSchema,
+  sender_id: uuidSchema,
+  content: z
+    .string()
+    .min(1, 'Message cannot be empty')
+    .max(5000, 'Message cannot exceed 5000 characters'),
+  message_type: messageTypeSchema.default('text'),
+  read_at: isoTimestampSchema.optional().nullable(),
+  deleted_at: isoTimestampSchema.optional().nullable(),
+})
+
+export const conversationMessageUpdateSchema = z.object({
+  read_at: isoTimestampSchema.optional().nullable(),
+  deleted_at: isoTimestampSchema.optional().nullable(),
+})
+
+// ──────────────────────────────────────────────────────────────
+// User Favorite Schemas
+// ──────────────────────────────────────────────────────────────
+
+export const userFavoriteInsertSchema = z.object({
+  id: uuidSchema.optional(),
+  user_id: uuidSchema,
+  listing_id: uuidSchema,
+})
+
+// ──────────────────────────────────────────────────────────────
 // Listing Search Params Schema
 // ──────────────────────────────────────────────────────────────
 
@@ -321,6 +387,25 @@ export type RentAgreementInsertInput = z.infer<typeof rentAgreementInsertSchema>
 
 /** Validated input type for updating a rent agreement (from Zod schema). */
 export type RentAgreementUpdateInput = z.infer<typeof rentAgreementUpdateSchema>
+
+/** Validated input type for creating a conversation (from Zod schema). */
+export type ConversationInsertInput = z.infer<typeof conversationInsertSchema>
+
+/** Validated input type for updating a conversation (from Zod schema). */
+export type ConversationUpdateInput = z.infer<typeof conversationUpdateSchema>
+
+/** Validated input type for creating a conversation message (from Zod schema). */
+export type ConversationMessageInsertInput = z.infer<
+  typeof conversationMessageInsertSchema
+>
+
+/** Validated input type for updating a conversation message (from Zod schema). */
+export type ConversationMessageUpdateInput = z.infer<
+  typeof conversationMessageUpdateSchema
+>
+
+/** Validated input type for creating a user favorite (from Zod schema). */
+export type UserFavoriteInsertInput = z.infer<typeof userFavoriteInsertSchema>
 
 /** Validated input type for listing search query parameters (from Zod schema). */
 export type ListingSearchParamsInput = z.infer<typeof listingSearchParamsSchema>

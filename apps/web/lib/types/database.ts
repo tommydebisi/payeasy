@@ -216,6 +216,112 @@ export interface MessageWithSender extends Message {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Conversation
+// ──────────────────────────────────────────────────────────────
+
+/** Message type enum — expanded beyond plain text. */
+export type MessageType = 'text' | 'image' | 'payment_request' | 'agreement_invite'
+
+/**
+ * Exact database row shape for the `conversations` table.
+ * Represents a unique conversation between two users, optionally tied to a listing.
+ * user1_id < user2_id is enforced by a CHECK constraint to prevent duplicates.
+ */
+export interface ConversationRow {
+  id: string
+  /** Always the lesser UUID (enforced by CHECK constraint). */
+  user1_id: string
+  /** Always the greater UUID (enforced by CHECK constraint). */
+  user2_id: string
+  /** Optional listing context for the conversation. */
+  listing_id: string | null
+  /** Cached preview of the last message (truncated, updated by trigger). */
+  last_message: string | null
+  last_message_at: ISOTimestamp | null
+  last_message_sender: string | null
+  created_at: ISOTimestamp
+  updated_at: ISOTimestamp
+}
+
+/** Domain-layer conversation (optional fields instead of nulls). */
+export interface Conversation {
+  id: string
+  user1_id: string
+  user2_id: string
+  listing_id?: string
+  last_message?: string
+  last_message_at?: ISOTimestamp
+  last_message_sender?: string
+  created_at: ISOTimestamp
+  updated_at: ISOTimestamp
+}
+
+/** Fields allowed when inserting a new conversation row. */
+export type ConversationInsert = Omit<ConversationRow, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+}
+
+/** Fields allowed when updating a conversation (user IDs are immutable). */
+export type ConversationUpdate = Partial<
+  Omit<ConversationInsert, 'id' | 'user1_id' | 'user2_id'>
+>
+
+/**
+ * Exact database row shape for the `messages` table (new schema).
+ * Individual messages scoped to a conversation.
+ */
+export interface ConversationMessageRow {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  message_type: MessageType
+  /** NULL means unread; set when the receiver reads the message. */
+  read_at: ISOTimestamp | null
+  /** Soft delete — row kept but hidden in UI. */
+  deleted_at: ISOTimestamp | null
+  created_at: ISOTimestamp
+}
+
+/** Domain-layer conversation message (optional fields instead of nulls). */
+export interface ConversationMessage {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  message_type: MessageType
+  read_at?: ISOTimestamp
+  deleted_at?: ISOTimestamp
+  created_at: ISOTimestamp
+}
+
+/** Fields allowed when inserting a new conversation message. */
+export type ConversationMessageInsert = Omit<
+  ConversationMessageRow,
+  'id' | 'created_at'
+> & {
+  id?: string
+  message_type?: MessageType
+}
+
+/** Fields that can be updated post-creation. */
+export type ConversationMessageUpdate = Partial<
+  Pick<ConversationMessageRow, 'read_at' | 'deleted_at'>
+>
+
+/** Conversation enriched with participant info. */
+export interface ConversationWithUsers extends Conversation {
+  user1: PublicUser
+  user2: PublicUser
+  listing?: Pick<Listing, 'id' | 'title' | 'address'>
+}
+
+/** Conversation message joined with sender info. */
+export interface ConversationMessageWithSender extends ConversationMessage {
+  sender: PublicUser
+}
+
+// ──────────────────────────────────────────────────────────────
 // PaymentRecord
 // ──────────────────────────────────────────────────────────────
 
@@ -333,6 +439,39 @@ export interface RentAgreementDetail extends RentAgreement {
 }
 
 // ──────────────────────────────────────────────────────────────
+// UserFavorite
+// ──────────────────────────────────────────────────────────────
+
+/**
+ * Exact database row shape for the `user_favorites` table.
+ * Represents a user's bookmarked/favorited listing.
+ */
+export interface UserFavoriteRow {
+  id: string
+  user_id: string
+  listing_id: string
+  created_at: ISOTimestamp
+}
+
+/** Domain-layer user favorite. */
+export interface UserFavorite {
+  id: string
+  user_id: string
+  listing_id: string
+  created_at: ISOTimestamp
+}
+
+/** Fields allowed when inserting a new favorite. */
+export type UserFavoriteInsert = Omit<UserFavoriteRow, 'id' | 'created_at'> & {
+  id?: string
+}
+
+/** Favorite joined with full listing details. */
+export interface UserFavoriteWithListing extends UserFavorite {
+  listing: ListingWithLandlord
+}
+
+// ──────────────────────────────────────────────────────────────
 // Supabase Database Generic Interface
 // ──────────────────────────────────────────────────────────────
 
@@ -366,10 +505,15 @@ export interface Database {
         Insert: ListingAmenityInsert
         Update: Partial<ListingAmenityInsert>
       }
+      conversations: {
+        Row: ConversationRow
+        Insert: ConversationInsert
+        Update: ConversationUpdate
+      }
       messages: {
-        Row: MessageRow
-        Insert: MessageInsert
-        Update: MessageUpdate
+        Row: ConversationMessageRow
+        Insert: ConversationMessageInsert
+        Update: ConversationMessageUpdate
       }
       payment_records: {
         Row: PaymentRecordRow
@@ -381,6 +525,11 @@ export interface Database {
         Insert: RentAgreementInsert
         Update: RentAgreementUpdate
       }
+      user_favorites: {
+        Row: UserFavoriteRow
+        Insert: UserFavoriteInsert
+        Update: never // Favorites cannot be updated, only created/deleted
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -388,6 +537,7 @@ export interface Database {
       listing_status: ListingStatus
       payment_status: PaymentStatus
       agreement_status: AgreementStatus
+      message_type: MessageType
     }
   }
 }

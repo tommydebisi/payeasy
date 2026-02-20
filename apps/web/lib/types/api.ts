@@ -20,6 +20,12 @@ import type {
   PaymentRecord,
   User,
   PublicUser,
+  Conversation,
+  ConversationWithUsers,
+  ConversationMessage,
+  ConversationMessageWithSender,
+  UserFavorite,
+  UserFavoriteWithListing,
 } from './database'
 
 // ──────────────────────────────────────────────────────────────
@@ -227,3 +233,67 @@ export type RegisterUserBody = Pick<
 export type UpdateUserBody = Partial<
   Pick<User, 'username' | 'email' | 'avatar_url' | 'bio'>
 >
+
+// ──────────────────────────────────────────────────────────────
+// Conversations
+// ──────────────────────────────────────────────────────────────
+
+/** Response shape for GET /api/conversations — list of user's conversations. */
+export interface ConversationListResponse {
+  conversations: ConversationWithUsers[]
+  total: number
+}
+
+/** Response shape for GET /api/conversations/:id — single conversation with messages. */
+export interface ConversationDetailResponse {
+  conversation: ConversationWithUsers
+  messages: ConversationMessageWithSender[]
+  total_messages: number
+}
+
+/** Request body for POST /api/conversations — start a new conversation. */
+export type CreateConversationBody = Pick<
+  Conversation,
+  'user1_id' | 'user2_id'
+> & {
+  listing_id?: string
+  initial_message?: string
+}
+
+/** Request body for POST /api/conversations/:id/messages — send a message. */
+export type SendConversationMessageBody = Pick<
+  ConversationMessage,
+  'content' | 'message_type'
+>
+
+/** Minimal conversation preview for inbox/list views. */
+export type ConversationPreview = Pick<
+  Conversation,
+  'id' | 'last_message' | 'last_message_at' | 'created_at'
+> & {
+  other_user: PublicUser
+  listing?: Pick<Listing, 'id' | 'title'>
+  unread_count: number
+}
+
+// ──────────────────────────────────────────────────────────────
+// Favorites
+// ──────────────────────────────────────────────────────────────
+
+/** Response shape for GET /api/users/me/favorites — user's favorite listings. */
+export interface UserFavoritesResponse {
+  favorites: UserFavoriteWithListing[]
+  total: number
+}
+
+/** Response shape for POST /api/listings/:id/favorite — toggle favorite status. */
+export interface FavoriteToggleResponse {
+  favorited: boolean
+  listing_id: string
+}
+
+/** Minimal favorite info for listing cards (shows if user favorited it). */
+export type FavoriteStatus = {
+  is_favorited: boolean
+  favorite_count: number
+}

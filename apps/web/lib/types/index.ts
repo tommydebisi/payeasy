@@ -20,6 +20,7 @@ export type {
   ListingStatus,
   PaymentStatus,
   AgreementStatus,
+  MessageType,
 
   // User
   UserRow,
@@ -42,12 +43,26 @@ export type {
   ListingAmenity,
   ListingAmenityInsert,
 
-  // Message
+  // Message (legacy - deprecated in favor of ConversationMessage)
   MessageRow,
   Message,
   MessageInsert,
   MessageUpdate,
   MessageWithSender,
+
+  // Conversation
+  ConversationRow,
+  Conversation,
+  ConversationInsert,
+  ConversationUpdate,
+  ConversationWithUsers,
+
+  // ConversationMessage
+  ConversationMessageRow,
+  ConversationMessage,
+  ConversationMessageInsert,
+  ConversationMessageUpdate,
+  ConversationMessageWithSender,
 
   // PaymentRecord
   PaymentRecordRow,
@@ -62,6 +77,12 @@ export type {
   RentAgreementInsert,
   RentAgreementUpdate,
   RentAgreementDetail,
+
+  // UserFavorite
+  UserFavoriteRow,
+  UserFavorite,
+  UserFavoriteInsert,
+  UserFavoriteWithListing,
 
   // Supabase typed client interface
   Database,
@@ -97,6 +118,18 @@ export type {
   PublicUserProfileResponse,
   RegisterUserBody,
   UpdateUserBody,
+
+  // Conversations
+  ConversationListResponse,
+  ConversationDetailResponse,
+  CreateConversationBody,
+  SendConversationMessageBody,
+  ConversationPreview,
+
+  // Favorites
+  UserFavoritesResponse,
+  FavoriteToggleResponse,
+  FavoriteStatus,
 } from './api'
 
 // Zod validation schemas (values — can be used at runtime)
@@ -118,6 +151,12 @@ export {
   paymentRecordUpdateSchema,
   rentAgreementInsertSchema,
   rentAgreementUpdateSchema,
+  conversationInsertSchema,
+  conversationUpdateSchema,
+  messageTypeSchema,
+  conversationMessageInsertSchema,
+  conversationMessageUpdateSchema,
+  userFavoriteInsertSchema,
   listingSearchParamsSchema,
 } from './validation'
 
@@ -128,6 +167,11 @@ export type {
   ListingInsertInput,
   ListingUpdateInput,
   ListingAmenityInsertInput,
+  ConversationInsertInput,
+  ConversationUpdateInput,
+  ConversationMessageInsertInput,
+  ConversationMessageUpdateInput,
+  UserFavoriteInsertInput,
   MessageInsertInput,
   MessageUpdateInput,
   PaymentRecordInsertInput,
