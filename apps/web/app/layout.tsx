@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import FavoritesProvider from '@/components/FavoritesProvider'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -16,7 +17,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className={`${inter.className} bg-slate-950 text-white min-h-screen`}>{children}</body>
+            <body className={`${inter.className} bg-slate-950 text-white min-h-screen`}>
+                <FavoritesProvider>{children}</FavoritesProvider>
+            </body>
         </html>
     )
 }
