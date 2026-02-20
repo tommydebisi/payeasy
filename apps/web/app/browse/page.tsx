@@ -83,33 +83,53 @@ const MOCK_PROPERTIES: Property[] = [
 
 export default function BrowsePage() {
   const searchParams = useSearchParams();
+  const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Derived state from URL params to filter the mock data
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>(MOCK_PROPERTIES);
+  const currentSortBy = searchParams?.get("sortBy") || "created_at";
+  const currentOrder = searchParams?.get("order") || "desc";
 
-  // A simple mock filtering logic (in reality this would be API call)
   useEffect(() => {
-    if (!searchParams) return;
-
-    const minPrice = Number(searchParams.get("minPrice")) || 0;
-    const maxPrice = Number(searchParams.get("maxPrice")) || 5000;
-    const bedrooms = searchParams.get("bedrooms");
-    const bathrooms = searchParams.get("bathrooms");
-    const locationQuery = searchParams.get("location");
-
-    const filtered = MOCK_PROPERTIES.filter((p) => {
-      const matchesPrice = p.price >= minPrice && p.price <= maxPrice;
-      const matchesBeds = bedrooms ? p.bedrooms >= Number(bedrooms) : true;
-      const matchesBaths = bathrooms ? p.bathrooms >= Number(bathrooms) : true;
-      const matchesLocation = locationQuery
-        ? p.location.toLowerCase().includes(locationQuery.toLowerCase())
-        : true;
-
-      return matchesPrice && matchesBeds && matchesBaths && matchesLocation;
-    });
-
-    setFilteredProperties(filtered);
+    async function fetchListings() {
+      setLoading(true);
+      try {
+        const query = searchParams?.toString() || "";
+        const res = await fetch(`/api/listings/search?${query}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFilteredProperties(data.listings || []);
+        } else {
+          setFilteredProperties([]);
+        }
+      } catch (e) {
+        console.error("Failed to fetch listings", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchListings();
   }, [searchParams]);
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    const url = new URL(window.location.href);
+
+    // Parse value like "price_desc"
+    if (value === "recommended") {
+      url.searchParams.set("sortBy", "recommended");
+      url.searchParams.set("order", "desc");
+    } else {
+      const parts = value.split("_");
+      const order = parts.pop() || "desc";
+      const sortBy = parts.join("_");
+
+      url.searchParams.set("sortBy", sortBy);
+      url.searchParams.set("order", order);
+    }
+
+    // Preserve other search params, just update sorting
+    window.location.href = url.pathname + url.search;
+  };
 
   const handleClearFilters = () => {
     // We can just reload or push to base path
@@ -149,16 +169,31 @@ export default function BrowsePage() {
 
           {/* Main Content Area */}
           <div className="flex-1">
-            {/* Results Count & Sort (Visual only) */}
+            {/* Results Count & Sort */}
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
                 {filteredProperties.length} Properties Found
               </h2>
-              <div className="text-sm text-gray-500">
-                Sort by:{" "}
-                <span className="cursor-pointer font-medium text-gray-900 transition-colors hover:text-primary">
-                  Recommended
-                </span>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <label htmlFor="sort-dropdown">Sort by:</label>
+                <select
+                  id="sort-dropdown"
+                  value={
+                    currentSortBy === "recommended"
+                      ? "recommended"
+                      : `${currentSortBy}_${currentOrder}`
+                  }
+                  onChange={handleSortChange}
+                  className="rounded-md border-gray-300 bg-white py-1 pl-2 pr-8 text-sm font-medium text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="created_at_desc">Newest First</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="views_desc">Most Viewed</option>
+                  <option value="favorites_desc">Most Favorited</option>
+                  <option disabled>──────────</option>
+                  <option value="recommended">Recommended</option>
+                </select>
               </div>
             </div>
 
@@ -214,7 +249,7 @@ export default function BrowsePage() {
                         </div>
                         <div className="text-right">
                           <span className="text-lg font-bold text-primary">
-                            {property.price} XLM
+                            {property.rent_xlm || property.price} XLM
                           </span>
                           <span className="ml-1 text-xs text-gray-400">/ mo</span>
                         </div>
@@ -222,7 +257,7 @@ export default function BrowsePage() {
                     </div>
                   </div>
                 ))
-              ) : (
+              ) : !loading ? (
                 <div className="col-span-full rounded-xl border border-dashed border-gray-300 bg-white py-16 text-center text-gray-500">
                   <div className="mb-4 inline-flex items-center justify-center rounded-full bg-gray-50 p-4">
                     <MapPin size={32} className="text-gray-300" />
@@ -239,7 +274,7 @@ export default function BrowsePage() {
                     Clear all filters
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

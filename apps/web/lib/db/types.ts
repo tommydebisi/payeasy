@@ -12,6 +12,8 @@ export interface Listing {
   latitude?: number;
   longitude?: number;
   status: "active" | "inactive" | "deleted";
+  view_count: number;
+  favorite_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -30,7 +32,14 @@ export interface ListingSearchParams {
   bathrooms?: number;
   amenities?: string[]; // comma-separated or array
   search?: string; // full-text search query
-  sortBy?: "price" | "created_at" | "bedrooms" | "bathrooms";
+  sortBy?:
+    | "price"
+    | "created_at"
+    | "bedrooms"
+    | "bathrooms"
+    | "views"
+    | "favorites"
+    | "recommended";
   order?: "asc" | "desc";
   page?: number;
   limit?: number;

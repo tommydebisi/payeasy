@@ -22,8 +22,14 @@ export async function GET(request: NextRequest) {
         : undefined,
       search: searchParams.get("search") || undefined,
       sortBy:
-        (searchParams.get("sortBy") as "price" | "created_at" | "bedrooms" | "bathrooms") ||
-        "created_at",
+        (searchParams.get("sortBy") as
+          | "price"
+          | "created_at"
+          | "bedrooms"
+          | "bathrooms"
+          | "views"
+          | "favorites"
+          | "recommended") || "created_at",
       order: (searchParams.get("order") as "asc" | "desc") || "desc",
       page: searchParams.get("page") ? Number(searchParams.get("page")) : 1,
       limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : 20,
@@ -80,8 +86,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const sortColumn = params.sortBy === "price" ? "rent_xlm" : params.sortBy || "created_at";
-    query = query.order(sortColumn, { ascending: params.order === "asc" });
+    if (params.sortBy === "recommended") {
+      // Recommended algorithm: Most favorites first, then most views
+      query = query
+        .order("favorite_count", { ascending: false })
+        .order("view_count", { ascending: false })
+        .order("created_at", { ascending: false });
+    } else {
+      let sortColumn: any = params.sortBy || "created_at";
+      if (params.sortBy === "price") sortColumn = "rent_xlm";
+      if (params.sortBy === "views") sortColumn = "view_count";
+      if (params.sortBy === "favorites") sortColumn = "favorite_count";
+
+      query = query.order(sortColumn, { ascending: params.order === "asc" });
+    }
 
     const offset = (params.page! - 1) * params.limit!;
     query = query.range(offset, offset + params.limit! - 1);
