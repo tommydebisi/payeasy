@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { Request } from "next/server";
 import { Keypair } from "stellar-sdk";
 import { generateChallenge } from "@/lib/auth/stellar-auth";
+import { successResponse, errorResponse, handleError } from "@/app/api/utils/response";
 
 /**
  * POST /api/auth/login
@@ -9,37 +10,23 @@ import { generateChallenge } from "@/lib/auth/stellar-auth";
  * prove ownership of the corresponding private key.
  */
 export async function POST(request: Request) {
-    try {
-        const body = await request.json();
-        const { publicKey } = body;
-
-        if (!publicKey || typeof publicKey !== "string") {
-            return NextResponse.json(
-                { success: false, error: { message: "publicKey is required" } },
-                { status: 400 }
-            );
-        }
-
-        // Validate that the public key is well-formed
-        try {
-            Keypair.fromPublicKey(publicKey);
-        } catch {
-            return NextResponse.json(
-                { success: false, error: { message: "Invalid Stellar public key" } },
-                { status: 400 }
-            );
-        }
-
-        const challenge = generateChallenge();
-
-        return NextResponse.json({
-            success: true,
-            data: challenge,
-        });
-    } catch {
-        return NextResponse.json(
-            { success: false, error: { message: "Internal server error" } },
-            { status: 500 }
-        );
+  const requestId = request.headers.get("x-request-id") ?? undefined;
+  try {
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body.publicKey !== "string") {
+      return errorResponse("publicKey is required", 400);
     }
+    const { publicKey } = body;
+
+    try {
+      Keypair.fromPublicKey(publicKey);
+    } catch {
+      return errorResponse("Invalid Stellar public key", 400);
+    }
+
+    const challenge = generateChallenge();
+    return successResponse(challenge);
+  } catch (err) {
+    return handleError(err, requestId ?? undefined);
+  }
 }

@@ -1,10 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getServerClient } from "@/lib/supabase/server";
 import type { ListingSearchParams, ListingSearchResult } from "@/lib/db/types";
+import { successResponse, errorResponse, handleError } from "@/app/api/utils";
 
 export async function GET(request: NextRequest) {
+  const requestId = request.headers.get("x-request-id") ?? undefined;
   try {
     const supabase = getServerClient();
+    if (!supabase) {
+      return successResponse({
+        listings: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      });
+    }
     const searchParams = request.nextUrl.searchParams;
 
     const params: ListingSearchParams = {
@@ -117,11 +128,7 @@ export async function GET(request: NextRequest) {
     const { data: listings, error, count } = await query;
 
     if (error) {
-      console.error("Database error:", error);
-      return NextResponse.json(
-        { error: "Failed to search listings", details: error.message },
-        { status: 500 }
-      );
+      throw error;
     }
 
     let filteredListings = listings || [];
@@ -165,12 +172,8 @@ export async function GET(request: NextRequest) {
       totalPages,
     };
 
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("Search endpoint error:", error);
-    return NextResponse.json(
-      { error: "Internal server error", details: error.message },
-      { status: 500 }
-    );
+    return successResponse(result);
+  } catch (err) {
+    return handleError(err, requestId);
   }
 }

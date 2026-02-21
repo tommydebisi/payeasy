@@ -1,13 +1,15 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-export function createServerClient() {
+/**
+ * Create a Supabase server client with service role. Returns null when env is not set,
+ * so the app can run without Supabase configured.
+ */
+export function createServerClient(): ReturnType<typeof createClient> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error(
-      "Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
-    );
+    return null;
   }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
@@ -18,10 +20,10 @@ export function createServerClient() {
   });
 }
 
-let serverClient: SupabaseClient | null = null;
+let serverClient: SupabaseClient | null | undefined = undefined;
 
-export function getServerClient() {
-  if (!serverClient) {
+export function getServerClient(): SupabaseClient | null {
+  if (serverClient === undefined) {
     serverClient = createServerClient();
   }
   return serverClient;
