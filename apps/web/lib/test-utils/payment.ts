@@ -61,6 +61,7 @@ export const PaymentFactory = {
             payment_period: `${year}-${month}`,
             stellar_ledger: null,
             confirmed_at: null as any,
+            confirmed_at: null,
             ...overrides,
         };
     },
