@@ -17,6 +17,10 @@
   "directories": {
     "doc": "docs"
   },
+  "workspaces": [
+    "apps/*",
+    "contracts/*"
+  ],
   "scripts": {
     "dev": "cd apps/web && npm run dev",
     "build": "cd apps/web && npm run build",
@@ -35,4 +39,6 @@
   "devDependencies": {
     "@types/sanitize-html": "^2.16.0"
   }
+}
+  "devDependencies": {}
 }

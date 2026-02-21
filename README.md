@@ -6,6 +6,7 @@ PayEasy is an open-source platform built on the Stellar blockchain that makes fi
 
 [![Stellar](https://img.shields.io/badge/Stellar-Soroban-7D00FF?style=flat&logo=stellar)](https://stellar.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![codecov](https://codecov.io/gh/Ogstevyn/payeasy/graph/badge.svg)](https://codecov.io/gh/Ogstevyn/payeasy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
