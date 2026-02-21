@@ -1,4 +1,4 @@
-import { createClient } from "../superbase/server";
+import { createClient } from "../supabase/server";
 
 export async function getSimilarListings ({ preferences, favorites, searchHistory, budget, amenities, behavior }: any) {
     const supabase = await createClient();

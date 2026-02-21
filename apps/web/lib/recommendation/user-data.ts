@@ -1,8 +1,9 @@
-import { createClient } from "../supabaseClient";
+import { createClient } from "../supabase/server";
+
 const supabase = createClient();
 
 export async function getUserPreferences (userId: string) {
-    const { data } = await supabase
+    const { data } = await (await supabase)
         .from('user_preferences')
         .select('*')
         .limit(1)
@@ -11,7 +12,7 @@ export async function getUserPreferences (userId: string) {
 }
 
 export async function getUserFavorites (userId: string) {
-    const { data } = await supabase
+    const { data } = await (await supabase)
         .from('user_favorites')
         .select('listing_id')
         .eq('user_id', userId);
@@ -19,7 +20,7 @@ export async function getUserFavorites (userId: string) {
 }
 
 export async function getUserSearchHistory (userId: string) {
-    const { data } = await supabase
+    const { data } = await (await supabase)
         .from('user_search_history')
         .select('*')
         .eq('user_id', userId)
