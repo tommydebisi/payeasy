@@ -158,7 +158,7 @@ describe('Avatar Storage', () => {
       const publicUrl = 'https://storage.example.com/avatars/user-123/avatar.jpg';
       const mockBucket = {
         upload: vi.fn().mockResolvedValue({
-          data: { path: 'user-123/avatar.jpg' },
+          data: { path: 'user-123/user-123-1708516801000.jpg' },
           error: null,
         }),
         list: vi.fn().mockResolvedValue({ data: [], error: null }),
@@ -173,7 +173,7 @@ describe('Avatar Storage', () => {
       const result = await uploadAvatar(mockSupabase, 'user-123', file);
 
       expect(result.publicUrl).toBe(publicUrl);
-      expect(result.path).toBe('user-123/avatar.jpg');
+      expect(result.path).toMatch(/^user-123\/user-123-\d+\.jpg$/);
     });
   });
 
