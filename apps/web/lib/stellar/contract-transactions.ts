@@ -202,7 +202,8 @@ export async function buildContractTransaction(
     console.warn("Failed to fetch fee stats, using default base fee", e);
   }
 
-  const baseFee = params.baseFee ?? (feeStats ? Number(feeStats.inclusionFee.mode) : Number(BASE_FEE));
+  const parsedFeeStats = feeStats as { inclusionFee?: { mode?: string } } | undefined;
+  const baseFee = params.baseFee ?? (parsedFeeStats?.inclusionFee?.mode ? Number(parsedFeeStats.inclusionFee.mode) : Number(BASE_FEE));
 
   const initialTransaction = new TransactionBuilder(account, {
     fee: baseFee.toString(),
