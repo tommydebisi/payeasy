@@ -24,9 +24,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
+      - name: Clean caches
+        run: |
+          rm -rf node_modules/.cache
+          rm -rf /home/runner/.cache/next-swc
+
       - name: Install dependencies
         working-directory: .
-        run: npm install
+        run: npm ci
 
       - name: Build application
         run: npm run build
