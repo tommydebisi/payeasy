@@ -30,7 +30,7 @@ const nextConfig = {
     }
 
     // Create an alias for bidi-js to provide a default export wrapper
-    config.resolve.alias['bidi-js'] = require.resolve('./node_modules/bidi-js/dist/bidi.js');
+    config.resolve.alias['bidi-js'] = require.resolve('bidi-js');
 
     // Also add to the externals to ensure proper resolution
     if (!config.externals) config.externals = [];
