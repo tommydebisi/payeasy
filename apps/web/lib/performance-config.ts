@@ -3,7 +3,7 @@
  * Default budgets, thresholds, and alerts configuration
  */
 
-import { VitalConfig, PerformanceBudget, VitalThresholds } from '../performance/types';
+import { VitalConfig, PerformanceBudget, VitalThresholds } from './performance/types';
 
 // Default performance budgets for PayEasy
 export const DEFAULT_BUDGETS: PerformanceBudget[] = [
@@ -11,7 +11,7 @@ export const DEFAULT_BUDGETS: PerformanceBudget[] = [
   { metric: 'fid', limit: 100, unit: 'ms', severity: 'warning' },
   { metric: 'cls', limit: 0.1, unit: 'score', severity: 'warning' },
   { metric: 'fcp', limit: 1800, unit: 'ms', severity: 'warning' },
-  { metric: 'ttfb', limit: 600, unit: 'ms', severity: 'info' },
+  { metric: 'ttfb', limit: 600, unit: 'ms', severity: 'warning' },
 ];
 
 // Standard Web Vitals thresholds for core metrics
@@ -66,12 +66,12 @@ export function getVitalsConfig(): VitalConfig {
     return PRODUCTION_CONFIG;
   }
 
-  switch (process.env.NODE_ENV) {
-    case 'development':
-      return DEVELOPMENT_CONFIG;
-    case 'staging':
-      return STAGING_CONFIG;
-    default:
-      return PRODUCTION_CONFIG;
+  const env = process.env.NODE_ENV;
+  if (env === 'development') {
+    return DEVELOPMENT_CONFIG;
   }
+  if (process.env.VERCEL_ENV === 'preview') {
+    return STAGING_CONFIG;
+  }
+  return PRODUCTION_CONFIG;
 }

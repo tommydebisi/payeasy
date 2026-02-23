@@ -6,8 +6,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { initPerformanceMonitor, getPerformanceMonitor } from './monitor';
-import { DashboardMetrics, PerformanceAlert, VitalConfig } from './types';
+import { initPerformanceMonitor, getPerformanceMonitor } from '@/lib/performance/monitor';
+import { DashboardMetrics, PerformanceAlert, VitalConfig } from '@/lib/performance/types';
 
 /**
  * Hook to use performance monitoring

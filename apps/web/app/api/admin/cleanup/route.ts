@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
 
     if (endpoint === 'history') {
       // Get job execution history
-      const history = await getJobExecutionHistory(jobName, limit);
+      const history = await getJobExecutionHistory(jobName || undefined, limit);
       return NextResponse.json({
         success: true,
         data: history,
