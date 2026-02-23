@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { RentContractService } from "@/services/rent-contract";
 import { useWallet } from "@/hooks/useWallet";
-import { getFreighterPublicKey } from "@/lib/stellar/freighter";
-import { getStellarNetworkConfig } from "@/lib/stellar/network";
-import { getNetworkTransactionStatus } from "@/lib/stellar/contract-transactions";
 import { Loader2, AlertCircle, CheckCircle2, Wallet, ArrowRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
@@ -55,7 +51,8 @@ function StatusBadge({ status }: { status: string }) {
 // ---------------------------------------------------------------------------
 
 export default function PaymentPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = (typeof params?.id === 'string' ? params.id : params?.id?.[0]) ?? '';
   const router = useRouter();
   
   // State
@@ -66,11 +63,20 @@ export default function PaymentPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [paymentRecordId, setPaymentRecordId] = useState<string | null>(null);
   const [networkName, setNetworkName] = useState<string>("Testnet");
+  const [feeDetails, setFeeDetails] = useState<{
+    baseFee: number;
+    resourceFee: number;
+    buffer: number;
+    totalFee: number;
+  } | null>(null);
+  const [isEstimatingFee, setIsEstimatingFee] = useState(false);
   const { isConnected, publicKey: walletKey, connect } = useWallet();
 
   useEffect(() => {
-    const config = getStellarNetworkConfig();
-    setNetworkName(config.name === "mainnet" ? "Mainnet" : "Testnet");
+    import("@/lib/stellar/network").then(({ getStellarNetworkConfig }) => {
+      const config = getStellarNetworkConfig();
+      setNetworkName(config.name === "mainnet" ? "Mainnet" : "Testnet");
+    });
   }, []);
 
   // Poll transaction status
@@ -80,6 +86,7 @@ export default function PaymentPage() {
     if (status === "processing" && txHash && paymentRecordId) {
       intervalId = setInterval(async () => {
         try {
+          const { getNetworkTransactionStatus } = await import("@/lib/stellar/contract-transactions");
           const result = await getNetworkTransactionStatus(txHash);
           
           if (result.status === "success") {
@@ -113,6 +120,35 @@ export default function PaymentPage() {
         await connect();
       }
 
+      
+      // Fetch fee estimate
+      setIsEstimatingFee(true);
+      try {
+        const { getStellarNetworkConfig } = await import("@/lib/stellar/network");
+        const networkConfig = getStellarNetworkConfig();
+        const { getFreighterPublicKey } = await import("@/lib/stellar/freighter");
+        const res = await fetch("/api/payments/estimate-fee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contractId: listing.contractAddress,
+            method: "deposit",
+            args: [BigInt(listing.shareAmount * 10_000_000).toString()],
+            sourcePublicKey: walletKey || await getFreighterPublicKey(),
+            network: networkConfig.name,
+          }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setFeeDetails(data);
+        }
+      } catch (feeErr) {
+        console.error("Fee estimation error:", feeErr);
+      } finally {
+        setIsEstimatingFee(false);
+      }
+
       // Show confirmation dialog
       setStatus("idle");
       setShowConfirm(true);
@@ -128,6 +164,10 @@ export default function PaymentPage() {
     setError(null);
 
     try {
+      const { getFreighterPublicKey } = await import("@/lib/stellar/freighter");
+      const { getStellarNetworkConfig } = await import("@/lib/stellar/network");
+      const { RentContractService } = await import("@/services/rent-contract");
+
       const publicKey = walletKey || await getFreighterPublicKey();
       const networkConfig = getStellarNetworkConfig();
 
@@ -199,12 +239,29 @@ export default function PaymentPage() {
               <span className="text-white font-medium">{listing.shareAmount} XLM</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Network Fee</span>
-              <span className="text-white font-medium">~0.0001 XLM</span>
+              <span className="text-gray-400">Base Fee</span>
+              <span className="text-white font-medium">{(feeDetails?.baseFee ?? 100) / 10_000_000} XLM</span>
             </div>
+            {feeDetails && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Resource Fee</span>
+                  <span className="text-white font-medium">{feeDetails.resourceFee / 10_000_000} XLM</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Security Buffer (20%)</span>
+                  <span className="text-white font-medium">{feeDetails.buffer / 10_000_000} XLM</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between text-sm border-t border-white/10 pt-4">
-              <span className="text-gray-400">Total</span>
-              <span className="text-xl font-bold text-indigo-400">{listing.shareAmount} XLM</span>
+              <span className="text-gray-400">Total Payment</span>
+              <span className="text-xl font-bold text-indigo-400">
+                {(BigInt(listing.shareAmount * 10_000_000) + BigInt(feeDetails?.totalFee ?? 100)) / 10_000_000n === BigInt(listing.shareAmount) 
+                  ? listing.shareAmount 
+                  : Number(BigInt(listing.shareAmount * 10_000_000) + BigInt(feeDetails?.totalFee ?? 100)) / 10_000_000}{" "}
+                XLM
+              </span>
             </div>
           </div>
 
