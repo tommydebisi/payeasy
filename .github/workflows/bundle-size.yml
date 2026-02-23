@@ -22,34 +22,19 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install root dependencies
-        run: npm ci || npm install
-
-      - name: Install web app dependencies
-        working-directory: apps/web
-        run: |
-          # Remove pnpm-lock.yaml to avoid conflicts and force npm usage
-          rm -f pnpm-lock.yaml
-          # Generate package-lock.json if it doesn't exist
-          if [ ! -f package-lock.json ]; then
-            npm install --package-lock-only
-          fi
-          # Clear Next.js cache to force fresh SWC download
-          rm -rf .next node_modules/.cache ~/.cache/next-swc
-          npm ci || npm install
+      - name: Install dependencies
+        working-directory: .
+        run: npm install
 
       - name: Build application
-        working-directory: apps/web
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN }}
-          # Prevent Next.js from trying to use pnpm
-          npm_config_user_agent: npm
 
       - name: Check bundle size budgets
         run: npm run bundle:check

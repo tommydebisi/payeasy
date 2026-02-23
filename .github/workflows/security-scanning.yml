@@ -72,15 +72,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          npm ci || npm install
-          cd apps/web
-          rm -f pnpm-lock.yaml
-          npm ci || npm install
-          cd ../..
+      - run: npm ci && cd apps/web && npm ci && cd ../..
 
       - uses: snyk/actions/node@master
         env:
@@ -149,15 +142,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          npm ci || npm install
-          cd apps/web
-          rm -f pnpm-lock.yaml
-          npm ci || npm install
-          cd ../..
+      - run: npm ci && cd apps/web && npm ci && cd ../..
 
       - uses: fossas/fossa-action@main
         with:
@@ -224,13 +210,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: apps/web/package-lock.json
 
       - id: check
         if: steps.files.outputs.any_changed == 'true' || github.event_name == 'schedule'
         run: |
-          npm ci || npm install || true
-          cd apps/web && (rm -f pnpm-lock.yaml; npm ci || npm install || true) && cd ../..
           npm audit --json > /tmp/audit.json || true
           SECURITY_UPDATES=$(grep -c '"severity": "critical\|"severity": "high' /tmp/audit.json || echo "0")
           VULNERABILITY_COUNT=$(jq '.metadata.vulnerabilities.total' /tmp/audit.json || echo "0")
@@ -251,46 +234,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install root dependencies
-        run: npm ci || npm install
-
-      - name: Install web app dependencies
-        working-directory: apps/web
-        run: |
-          # Remove pnpm-lock.yaml to avoid conflicts and force npm usage
-          rm -f pnpm-lock.yaml
-          # Generate package-lock.json if it doesn't exist
-          if [ ! -f package-lock.json ]; then
-            npm install --package-lock-only
-          fi
-          # Clear Next.js cache to force fresh SWC download
-          rm -rf .next node_modules/.cache ~/.cache/next-swc
-          npm ci || npm install
+      - run: npm ci && cd apps/web && npm ci || true
 
       - run: npx tsc --noEmit
-        working-directory: apps/web
         continue-on-error: true
 
       - run: npm run lint
-        working-directory: apps/web
         continue-on-error: true
 
       - run: npm test
-        working-directory: apps/web
         continue-on-error: true
 
-      - name: Build application
-        working-directory: apps/web
-        run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN }}
-          # Prevent Next.js from trying to use pnpm
-          npm_config_user_agent: npm
+      - run: npm run build
         continue-on-error: true
 
   # ==================== DAST - Dynamic Application Security Testing ====================

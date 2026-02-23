@@ -65,6 +65,8 @@
     "devDependencies": {
         "@faker-js/faker": "^10.3.0",
         "@lhci/cli": "^0.15.1",
+        "@next/bundle-analyzer": "^14.0.3",
+        "@next/swc-linux-x64-gnu": "14.0.3",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
         "@testing-library/user-event": "^14.6.1",
@@ -93,7 +95,6 @@
         "ts-jest": "^29.4.6",
         "tsx": "^4.21.0",
         "typescript": "^5",
-        "@next/bundle-analyzer": "^14.0.3",
         "vitest": "^4.0.18"
     }
 }
