@@ -3,14 +3,26 @@
 import Image from 'next/image'
 import { MapPin, Bed, Bath } from 'lucide-react'
 import FavoriteButton from '../FavoriteButton'
+import { CompareButtonIcon } from '../CompareButton'
 import type { Listing, ListingWithLandlord } from '../../lib/db/types'
 import Link from 'next/link'
 
-interface ListingCardProps {
-    listing: ListingWithLandlord | (Listing & { images?: string[]; landlord?: { username: string | null } })
+/** Extended listing type with images and landlord info for card display */
+type CardListing = Listing & {
+    images?: string[]
+    landlord?: {
+        username?: string | null
+        avatar_url?: string | null
+    }
 }
 
-export default function ListingCard({ listing }: ListingCardProps) {
+interface ListingCardProps {
+    listing: CardListing | ListingWithLandlord
+    /** Hide comparison button (e.g., on comparison page) */
+    hideCompare?: boolean
+}
+
+export default function ListingCard({ listing, hideCompare = false }: ListingCardProps) {
     // Use the first image from the array or fallback
     const images = (listing as any).images || [];
     const imageUrl = images.length > 0 
@@ -28,8 +40,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
-                    <div className="absolute top-3 left-3 z-10" onClick={(e) => e.preventDefault()}>
+                    <div className="absolute top-3 left-3 z-10 flex items-center gap-2" onClick={(e) => e.preventDefault()}>
                         <FavoriteButton listingId={listing.id} />
+                        {!hideCompare && (
+                            <CompareButtonIcon listing={listing} />
+                        )}
                     </div>
                 </Link>
                 <div className="p-5 flex flex-col flex-1">
