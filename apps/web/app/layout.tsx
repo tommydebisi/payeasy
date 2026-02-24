@@ -8,6 +8,10 @@ import WalletProvider from "@/providers/WalletProvider";
 import AuthProvider from "@/providers/AuthProvider";
 import FavoritesProvider from "@/components/FavoritesProvider";
 import ComparisonProvider from "@/components/ComparisonProvider";
+import dynamic from 'next/dynamic';
+
+const ComparisonBar = dynamic(() => import("@/components/ComparisonBar"), { ssr: false });
+
 import ComparisonBar from "@/components/ComparisonBar";
 import { AnalyticsTracker } from '@/components/AnalyticsTracker';
 import { Toaster } from 'react-hot-toast';

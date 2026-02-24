@@ -1,7 +1,7 @@
 {
   "name": "payeasy",
   "version": "1.0.0",
-  "description": "**Blockchain-powered rent sharing made simple.**",
+  "description": "Blockchain-powered rent sharing made simple.",
   "homepage": "https://github.com/Ogstevyn/payeasy#readme",
   "bugs": {
     "url": "https://github.com/Ogstevyn/payeasy/issues"
@@ -39,11 +39,19 @@
     "postinstall": "npm run install:web"
   },
   "dependencies": {
-    "sanitize-html": "^2.17.1"
+    "bidi-js": "^1.0.3",
+    "sanitize-html": "^2.17.1",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.3.0",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
     "@types/sanitize-html": "^2.16.0"
+  },
+  "overrides": {
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25"
   }
 }
