@@ -13,6 +13,7 @@ import dynamic from "next/dynamic";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 import "./globals.css";
 import "@fontsource-variable/inter";
 
@@ -54,8 +55,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       {/* Header - visible on all pages */}
                       <Header sticky isAuthenticated userName="User" />
 
-                      {children}
-                      <DynamicComparisonBar />
+                      {/* Sidebar - app-wide navigation */}
+                      <Sidebar />
+
+                      {/* Main content - full width; sidebar overlays content on desktop */}
+                      <main className="min-h-screen w-full">
+                        {children}
+                        <DynamicComparisonBar />
+                      </main>
                     </ComparisonProvider>
                   </FavoritesProvider>
                 </AuthProvider>
