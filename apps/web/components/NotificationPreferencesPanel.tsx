@@ -65,11 +65,11 @@ const CATEGORIES: Array<{
   icon: string
   description: string
 }> = [
-  { key: 'messages_enabled', label: 'Messages', icon: '💬', description: 'New message notifications' },
-  { key: 'payments_enabled', label: 'Payments', icon: '💸', description: 'Payment updates' },
-  { key: 'listings_enabled', label: 'Listings', icon: '🏠', description: 'Listing activity' },
-  { key: 'agreements_enabled', label: 'Agreements', icon: '📋', description: 'Rent agreement updates' },
-  { key: 'favorites_enabled', label: 'Favorites', icon: '❤️', description: 'Saved listing activity' },
+  { key: 'message_enabled', label: 'Messages', icon: '💬', description: 'New message notifications' },
+  { key: 'payment_enabled', label: 'Payments', icon: '💸', description: 'Payment updates' },
+  { key: 'listing_enabled', label: 'Listings', icon: '🏠', description: 'Listing activity' },
+  { key: 'agreement_enabled', label: 'Agreements', icon: '📋', description: 'Rent agreement updates' },
+  { key: 'favorite_enabled', label: 'Favorites', icon: '❤️', description: 'Saved listing activity' },
   { key: 'system_enabled', label: 'System', icon: '🔔', description: 'App & account alerts' },
 ]
 

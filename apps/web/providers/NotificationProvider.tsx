@@ -188,34 +188,102 @@ export default function NotificationProvider({
   // ── Actions ─────────────────────────────────────────────────
 
   const markAsRead = useCallback(async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
+    let previousNotifications: Notification[] = []
+
+    setNotifications((prev) => {
+      previousNotifications = prev
+      return prev.map((n) =>
         n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() as any } : n,
-      ),
-    )
-    await fetch(`/api/notifications/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_read: true }),
+      )
     })
+
+    try {
+      const res = await fetch(`/api/notifications/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_read: true }),
+      })
+
+      if (!res.ok) {
+        throw new Error(`Failed to mark notification ${id} as read: ${res.status} ${res.statusText}`)
+      }
+    } catch (error) {
+      console.error('Error marking notification as read; reverting optimistic update.', error)
+      setNotifications(previousNotifications)
+    }
   }, [])
 
   const markAllAsRead = useCallback(async () => {
     const now = new Date().toISOString()
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, is_read: true, read_at: now as any })),
-    )
-    await fetch('/api/notifications/mark-all-read', { method: 'POST' })
+    let previousNotifications: Notification[] | null = null
+
+    setNotifications((prev) => {
+      previousNotifications = prev
+      return prev.map((n) => ({ ...n, is_read: true, read_at: now as any }))
+    })
+
+    try {
+      const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' })
+      if (!res.ok) {
+        throw new Error(`Failed to mark all notifications as read: ${res.status}`)
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read', error)
+      if (previousNotifications) {
+        setNotifications(previousNotifications)
+      }
+      toast.error('Failed to mark all notifications as read. Please try again.')
+    }
   }, [])
 
   const deleteNotification = useCallback(async (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
-    await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
+    let previousNotifications: Notification[] | null = null
+
+    // Optimistically remove the notification from local state
+    setNotifications((prev) => {
+      previousNotifications = prev
+      return prev.filter((n) => n.id !== id)
+    })
+
+    try {
+      const response = await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete notification. Status: ${response.status}`)
+      }
+    } catch (error) {
+      console.error('Failed to delete notification. Reverting optimistic update.', error)
+      if (previousNotifications) {
+        setNotifications(previousNotifications)
+      }
+    }
   }, [])
 
   const clearRead = useCallback(async () => {
-    setNotifications((prev) => prev.filter((n) => !n.is_read))
-    await fetch('/api/notifications', { method: 'DELETE' })
+    let previousNotifications: Notification[] | null = null
+    setNotifications((prev) => {
+      previousNotifications = prev
+      return prev.filter((n) => !n.is_read)
+    })
+    try {
+      const res = await fetch('/api/notifications', { method: 'DELETE' })
+      if (!res.ok) {
+        if (previousNotifications) {
+          setNotifications(previousNotifications)
+        }
+        console.error(
+          'Failed to clear read notifications. Server responded with status:',
+          res.status,
+        )
+        toast.error('Failed to clear read notifications. Please try again.')
+      }
+    } catch (error) {
+      if (previousNotifications) {
+        setNotifications(previousNotifications)
+      }
+      console.error('Failed to clear read notifications:', error)
+      toast.error('Failed to clear read notifications. Please try again.')
+    }
   }, [])
 
   const updatePreferences = useCallback(

@@ -1,5 +1,5 @@
 -- ============================================================
--- Migration: 013_create_notifications.sql
+-- Migration: 012_create_notifications.sql
 -- Description: Notification system tables, indexes, RLS & triggers
 -- ============================================================
 
@@ -43,12 +43,12 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE TABLE IF NOT EXISTS notification_preferences (
   id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id                 UUID NOT NULL UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
-  messages_enabled        BOOLEAN NOT NULL DEFAULT TRUE,
-  payments_enabled        BOOLEAN NOT NULL DEFAULT TRUE,
-  listings_enabled        BOOLEAN NOT NULL DEFAULT TRUE,
+  message_enabled         BOOLEAN NOT NULL DEFAULT TRUE,
+  payment_enabled         BOOLEAN NOT NULL DEFAULT TRUE,
+  listing_enabled         BOOLEAN NOT NULL DEFAULT TRUE,
   system_enabled          BOOLEAN NOT NULL DEFAULT TRUE,
-  favorites_enabled       BOOLEAN NOT NULL DEFAULT TRUE,
-  agreements_enabled      BOOLEAN NOT NULL DEFAULT TRUE,
+  favorite_enabled        BOOLEAN NOT NULL DEFAULT TRUE,
+  agreement_enabled       BOOLEAN NOT NULL DEFAULT TRUE,
   sound_enabled           BOOLEAN NOT NULL DEFAULT FALSE,
   email_enabled           BOOLEAN NOT NULL DEFAULT FALSE,
   created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -73,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_created_at
 -- ──────────────────────────────────────────────────────────────
 CREATE TRIGGER update_notification_preferences_updated_at
   BEFORE UPDATE ON notification_preferences
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
 
 -- ──────────────────────────────────────────────────────────────
 -- ROW LEVEL SECURITY

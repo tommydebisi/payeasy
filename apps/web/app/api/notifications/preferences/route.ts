@@ -7,12 +7,12 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 const DEFAULT_PREFERENCES = {
-  messages_enabled: true,
-  payments_enabled: true,
-  listings_enabled: true,
+  message_enabled: true,
+  payment_enabled: true,
+  listing_enabled: true,
   system_enabled: true,
-  favorites_enabled: true,
-  agreements_enabled: true,
+  favorite_enabled: true,
+  agreement_enabled: true,
   sound_enabled: false,
   email_enabled: false,
 }
@@ -37,7 +37,7 @@ export async function GET() {
 
   // Return defaults if no preferences row yet
   if (!data) {
-    return NextResponse.json({ data: { user_id: user.id, ...DEFAULT_PREFERENCES } })
+    return NextResponse.json({ data: { id: null, user_id: user.id, ...DEFAULT_PREFERENCES } })
   }
 
   return NextResponse.json({ data })

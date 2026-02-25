@@ -34,12 +34,12 @@ const makeNotification = (overrides: Partial<Notification> = {}): Notification =
 const defaultPrefs: NotificationPreferences = {
   id: 'pref-1',
   user_id: 'user-1',
-  messages_enabled: true,
-  payments_enabled: true,
-  listings_enabled: true,
+  message_enabled: true,
+  payment_enabled: true,
+  listing_enabled: true,
   system_enabled: true,
-  favorites_enabled: true,
-  agreements_enabled: true,
+  favorite_enabled: true,
+  agreement_enabled: true,
   sound_enabled: false,
   email_enabled: false,
 }
