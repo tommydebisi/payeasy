@@ -1,20 +1,26 @@
 import "../lib/env";
 import type { Metadata } from "next";
 import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
-import NextTopLoader from 'nextjs-toploader';
+import { ErrorProvider } from "@/components/providers/ErrorProvider";
+import NextTopLoader from "nextjs-toploader";
 import WalletProvider from "@/providers/WalletProvider";
 import AuthProvider from "@/providers/AuthProvider";
 import FavoritesProvider from "@/components/FavoritesProvider";
 import ComparisonProvider from "@/components/ComparisonProvider";
-import ComparisonBar from "@/components/ComparisonBar";
 import NotificationProvider from "@/providers/NotificationProvider";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import dynamic from 'next/dynamic';
-import { AnalyticsTracker } from '@/components/AnalyticsTracker';
-import { Toaster } from 'react-hot-toast';
+import dynamic from "next/dynamic";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { Toaster } from "react-hot-toast";
+import Header from "@/components/Header";
 import "./globals.css";
 import "@fontsource-variable/inter";
 
+// Dynamically import ComparisonBar to reduce initial bundle size
+const DynamicComparisonBar = dynamic(() => import("@/components/ComparisonBar"), {
+  ssr: false,
+  loading: () => null, // Don't show anything while loading
+});
 export const metadata: Metadata = {
   title: "PayEasy | Shared Rent on Stellar",
   description: "Secure, blockchain-powered rent sharing.",
@@ -22,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to Google Fonts for faster load */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -33,80 +39,60 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-slate-950 text-white font-sans">
-        <NextTopLoader color="#7D00FF" showSpinner={false} />
-        <ServiceWorkerProvider>
-          <WalletProvider>
-            <AuthProvider>
-              <FavoritesProvider>
-                <ComparisonProvider>
-                  {children}
-                  <ComparisonBar />
-                </ComparisonProvider>
-              </FavoritesProvider>
-            </AuthProvider>
-          </WalletProvider>
-        </ServiceWorkerProvider>
-        <Toaster position="bottom-right" />
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-white text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-white font-sans">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {/* Global error boundary - wraps everything inside ThemeProvider */}
-          <ErrorProvider>
-            {/* Loading bar at the top */}
-            <NextTopLoader color="#7D00FF" showSpinner={false} />
-            
-            {/* Analytics tracking */}
-            <AnalyticsTracker />
-            
-            {/* Core providers */}
-            <ServiceWorkerProvider>
-              <WalletProvider>
-                <AuthProvider>
-                  <FavoritesProvider>
-                    <ComparisonProvider>
-                      <NotificationProvider>
-                        {children}
-                        <ComparisonBar />
-                        <NotificationCenter />
-                      </NotificationProvider>
-                    </ComparisonProvider>
-                  </FavoritesProvider>
-                </AuthProvider>
-              </WalletProvider>
-            </ServiceWorkerProvider>
-            
-            {/* Toast notifications with theme-aware styling */}
-            <Toaster 
-              position="bottom-right"
-              toastOptions={{
-                duration: 4000,
+      <body className="min-h-screen bg-white font-sans text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-white">
+        {/* Global error boundary - wraps everything inside ThemeProvider */}
+        <ErrorProvider>
+          {/* Loading bar at the top */}
+          <NextTopLoader color="#7D00FF" showSpinner={false} />
+
+          {/* Analytics tracking */}
+          <AnalyticsTracker />
+
+          {/* Core providers */}
+          <ServiceWorkerProvider>
+            <WalletProvider>
+              <AuthProvider>
+                <FavoritesProvider>
+                  <ComparisonProvider>
+                    <NotificationProvider>
+                      {/* Header - visible on all pages */}
+                      <Header sticky isAuthenticated userName="User" />
+
+                      {children}
+                      <DynamicComparisonBar />
+                      <NotificationCenter />
+                    </NotificationProvider>
+                  </ComparisonProvider>
+                </FavoritesProvider>
+              </AuthProvider>
+            </WalletProvider>
+          </ServiceWorkerProvider>
+
+          {/* Toast notifications with theme-aware styling */}
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: "hsl(var(--background))",
+                color: "hsl(var(--foreground))",
+                border: "1px solid hsl(var(--border))",
+              },
+              success: {
                 style: {
-                  background: 'hsl(var(--background))',
-                  color: 'hsl(var(--foreground))',
-                  border: '1px solid hsl(var(--border))'
+                  background: "hsl(var(--success))",
+                  color: "hsl(var(--success-foreground))",
                 },
-                success: {
-                  style: {
-                    background: 'hsl(var(--success))',
-                    color: 'hsl(var(--success-foreground))',
-                  },
+              },
+              error: {
+                style: {
+                  background: "hsl(var(--destructive))",
+                  color: "hsl(var(--destructive-foreground))",
                 },
-                error: {
-                  style: {
-                    background: 'hsl(var(--destructive))',
-                    color: 'hsl(var(--destructive-foreground))',
-                  },
-                },
-              }}
-            />
-          </ErrorProvider>
-        </ThemeProvider>
+              },
+            }}
+          />
+        </ErrorProvider>
       </body>
     </html>
   );
