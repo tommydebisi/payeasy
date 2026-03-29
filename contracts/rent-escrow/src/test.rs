@@ -193,7 +193,7 @@ fn test_release_transfer() {
 }
 
 #[test]
-fn test_claim_refund_transfer() {
+fn test_reclaim_deposit_transfer() {
     let env = Env::default();
     let (client, _, roommate_a, _, _, token) = setup_escrow(&env);
 
@@ -203,7 +203,7 @@ fn test_claim_refund_transfer() {
     env.ledger().set_timestamp(TEST_DEADLINE + 1);
 
     let initial_balance = token.balance(&roommate_a);
-    client.claim_refund(&roommate_a);
+    client.reclaim_deposit(&roommate_a);
 
     assert_eq!(token.balance(&roommate_a), initial_balance + 300_i128);
     assert_eq!(token.balance(&client.address), 0_i128);

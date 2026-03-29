@@ -250,7 +250,7 @@ impl RentEscrowContract {
     }
 
     /// Allow roommates to reclaim deposits after deadline.
-    pub fn claim_refund(env: Env, from: Address) -> Result<(), Error> {
+    pub fn reclaim_deposit(env: Env, from: Address) -> Result<(), Error> {
         from.require_auth();
 
         let deadline: u64 = env.storage()
@@ -262,18 +262,22 @@ impl RentEscrowContract {
             return Err(Error::DeadlineNotReached);
         }
 
-        let escrow: RentEscrow = env.storage()
+        let mut escrow: RentEscrow = env.storage()
             .persistent()
             .get(&DataKey::Escrow)
             .expect("escrow not initialized");
 
-        let mut state = escrow.roommates.get(from.clone()).unwrap();
+        let mut state = escrow.roommates.get(from.clone()).ok_or(Error::Unauthorized)?;
         let refund_amount = state.paid;
-        state.paid = 0;
         
-        let mut updated_escrow = escrow.clone();
-        updated_escrow.roommates.set(from.clone(), state);
-        env.storage().persistent().set(&DataKey::Escrow, &updated_escrow);
+        if refund_amount == 0 {
+            return Ok(());
+        }
+
+        state.paid = 0;
+        escrow.roommates.set(from.clone(), state);
+
+        env.storage().persistent().set(&DataKey::Escrow, &escrow);
 
         let token_client = token::Client::new(&env, &escrow.token_address);
         token_client.transfer(&env.current_contract_address(), &from, &refund_amount);
