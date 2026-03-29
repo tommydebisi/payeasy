@@ -118,6 +118,66 @@ fn test_get_balance() {
 }
 
 #[test]
+fn test_full_flow_scenario() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(RentEscrowContract, ());
+    let client = RentEscrowContractClient::new(&env, &contract_id);
+
+    let landlord = Address::generate(&env);
+    let roommate_a = Address::generate(&env);
+    let roommate_b = Address::generate(&env);
+    let roommate_c = Address::generate(&env);
+
+    let token_admin = Address::generate(&env);
+    let token_address = env.register_stellar_asset_contract(token_admin.clone());
+    let token = token::Client::new(&env, &token_address);
+    let token_admin_client = token::StellarAssetClient::new(&env, &token_address);
+
+    token_admin_client.mint(&roommate_a, &1000_i128);
+    token_admin_client.mint(&roommate_b, &1000_i128);
+    token_admin_client.mint(&roommate_c, &1000_i128);
+
+    // Step 1: Initialize with 3 roommate shares
+    let mut roommate_shares = Map::new(&env);
+    roommate_shares.set(roommate_a.clone(), 400_i128);
+    roommate_shares.set(roommate_b.clone(), 300_i128);
+    roommate_shares.set(roommate_c.clone(), 300_i128);
+
+    client.initialize(&landlord, &token_address, &1000_i128, &TEST_DEADLINE, &roommate_shares);
+
+    // Verify initialization
+    assert_eq!(client.get_landlord(), landlord);
+    assert_eq!(client.get_amount(), 1000_i128);
+    assert_eq!(client.is_fully_funded(), false);
+
+    // Step 2: All three contribute their shares
+    client.contribute(&roommate_a, &400_i128);
+    assert_eq!(client.get_balance(&roommate_a), 400_i128);
+    assert_eq!(client.get_total_funded(), 400_i128);
+    assert_eq!(token.balance(&client.address), 400_i128);
+
+    client.contribute(&roommate_b, &300_i128);
+    assert_eq!(client.get_balance(&roommate_b), 300_i128);
+    assert_eq!(client.get_total_funded(), 700_i128);
+
+    client.contribute(&roommate_c, &300_i128);
+    assert_eq!(client.get_balance(&roommate_c), 300_i128);
+    assert_eq!(client.get_total_funded(), 1000_i128);
+
+    // Step 3: Verify fully funded
+    assert_eq!(client.is_fully_funded(), true);
+    assert_eq!(token.balance(&client.address), 1000_i128);
+
+    // Step 4: Release to landlord
+    client.release();
+
+    assert_eq!(token.balance(&landlord), 1000_i128);
+    assert_eq!(token.balance(&client.address), 0_i128);
+}
+
+#[test]
 fn test_individual_token_refund() {
     let env = Env::default();
     let (client, landlord, roommate_a, _, _, token) = setup_escrow(&env);
