@@ -121,11 +121,6 @@ export default function CreateEscrowForm({
 }: CreateEscrowFormProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [draft, setDraft] = useState<EscrowFormDraft>({
-    totalRent: "",
-    tokenAddress: "",
-    deadlineDate: "",
-    roommates: [createRoommate()],
   const {
     values: draft,
     setValues: setDraft,
@@ -137,7 +132,7 @@ export default function CreateEscrowForm({
     key: "escrow_create_draft",
     initialValues: {
       totalRent: "",
-      tokenId: "",
+      tokenAddress: "",
       deadlineDate: "",
       roommates: [createRoommate()],
     },
