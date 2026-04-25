@@ -25,7 +25,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { OnboardingCard } from "@/components/ui/onboarding-card";
 import { isOnboarded, markOnboarded } from "@/components/ui/onboarding-card.helpers";
 import FundTestnetButton from "@/components/wallet/FundTestnetButton";
-import { getFreighterNetwork } from "@/lib/stellar/wallet";
+import { getFreighterNetwork, isFreighterVersionSupported } from "@/lib/stellar/wallet";
 import { getCurrentNetwork } from "@/lib/stellar/config";
 
 const FEATURES = [
@@ -64,6 +64,9 @@ export default function ConnectWalletPage() {
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [errorExpanded, setErrorExpanded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingNetwork, setCheckingNetwork] = useState(false);
+  const [freighterNetwork, setFreighterNetwork] = useState<"TESTNET" | "MAINNET" | null>(null);
+  const [isVersionOutdated, setIsVersionOutdated] = useState(false);
 
   useEffect(() => {
     if (isConnected && publicKey) {
@@ -116,6 +119,14 @@ export default function ConnectWalletPage() {
       setFreighterNetwork(null);
     }
   }, [isConnected, publicKey]);
+
+  // Check Freighter version on mount (only in browser, only when installed)
+  useEffect(() => {
+    if (!isFreighterInstalled) return;
+    isFreighterVersionSupported().then((supported) => {
+      setIsVersionOutdated(supported === false);
+    });
+  }, [isFreighterInstalled]);
 
 
   return (
@@ -193,6 +204,33 @@ export default function ConnectWalletPage() {
                 Link your Stellar wallet to start splitting rent with
                 trustless escrow. Secure, instant, transparent.
               </p>
+
+              {/* Outdated Freighter version banner */}
+              {isVersionOutdated && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full glass-card p-4 border border-amber-500/30 bg-amber-500/10 space-y-2"
+                >
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-amber-300 text-sm font-semibold">
+                        Please update Freighter to version 10+.
+                      </p>
+                      <a
+                        href="https://chrome.google.com/webstore/detail/freighter/bcacfldlkkdogcmkkibnjlakofdplcbk"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                      >
+                        Update on Chrome Web Store
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Freighter detection */}
               {!isFreighterInstalled ? (
