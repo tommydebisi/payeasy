@@ -87,6 +87,27 @@ export function assignSupportedToken(
   return { ...draft, tokenAddress: token.issuer };
 }
 
+export const DUPLICATE_ROOMMATE_ADDRESS_MESSAGE = "This address has already been added.";
+
+export function findDuplicateRoommateIds(roommates: RoommateInputValue[]): Set<string> {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const roommate of roommates) {
+    const trimmed = roommate.address.trim();
+    if (!trimmed) continue;
+    if (seen.has(trimmed)) {
+      duplicates.add(roommate.id);
+    } else {
+      seen.add(trimmed);
+    }
+  }
+  return duplicates;
+}
+
+export function hasDuplicateRoommateAddresses(roommates: RoommateInputValue[]): boolean {
+  return findDuplicateRoommateIds(roommates).size > 0;
+}
+
 export function formatFeeEstimate(feeXlm: string | null | undefined): string {
   if (!feeXlm) {
     return "Fee unavailable";
