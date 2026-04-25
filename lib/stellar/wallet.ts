@@ -88,6 +88,61 @@ export async function signTx(xdr: string, network?: string): Promise<string | nu
 }
 
 /**
+ * Returns the installed Freighter extension version string (e.g. "12.1.0"),
+ * or null if Freighter is not installed or the version cannot be determined.
+ */
+export async function getFreighterVersion(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const win = window as Window & {
+      freighter?: { version?: string; getVersion?: () => string };
+    };
+    if (!win.freighter) return null;
+
+    if (typeof win.freighter.version === "string") {
+      return win.freighter.version;
+    }
+    if (typeof win.freighter.getVersion === "function") {
+      return win.freighter.getVersion() ?? null;
+    }
+
+    // Fallback: try the freighter-api module's getVersion export if present
+    const freighterModule = await import("@stellar/freighter-api");
+    if (typeof (freighterModule as Record<string, unknown>).getVersion === "function") {
+      const result = await (freighterModule as unknown as { getVersion: () => Promise<{ version: string }> }).getVersion();
+      return result?.version ?? null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const MINIMUM_FREIGHTER_VERSION = [10, 0, 0] as const;
+
+function parseVersion(v: string): [number, number, number] {
+  const parts = v.split(".").map(Number);
+  return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0];
+}
+
+/**
+ * Returns true if the installed Freighter version meets the minimum requirement (10.0.0).
+ * Returns null when the version cannot be determined.
+ */
+export async function isFreighterVersionSupported(): Promise<boolean | null> {
+  const version = await getFreighterVersion();
+  if (!version) return null;
+
+  const [major, minor, patch] = parseVersion(version);
+  const [minMajor, minMinor, minPatch] = MINIMUM_FREIGHTER_VERSION;
+
+  if (major !== minMajor) return major > minMajor;
+  if (minor !== minMinor) return minor > minMinor;
+  return patch >= minPatch;
+}
+
+/**
  * Gets the current network of the connected Freighter wallet.
  * Returns "TESTNET" or "MAINNET" if connected and network can be determined.
  * Returns null if Freighter is not available, not connected, or network cannot be determined.
