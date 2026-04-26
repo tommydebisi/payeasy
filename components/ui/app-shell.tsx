@@ -1,5 +1,13 @@
 "use client";
 
+import OfflineBanner from "./offline-banner";
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <OfflineBanner />
+      {children}
+    </>
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { DottedSurface } from "@/components/ui/dotted-surface";
 import { StellarProvider } from "@/context/StellarContext";
