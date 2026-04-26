@@ -27,12 +27,18 @@ import { claimRefund, stroopsToXlm } from "@/lib/stellar/actions/claimRefund";
 import useContractPolling from "@/hooks/useContractPolling";
 import { buildReleaseXdr, signAndSubmitRelease } from "@/lib/stellar/actions/release";
 import { useToast } from "@/hooks/useToast";
+import CopyButton from "@/components/ui/copy-button";
 
 interface Props {
   contractId: string;
 }
 
 type ReleasePhase = "idle" | "building" | "review" | "submitting";
+
+function formatContractId(contractId: string): string {
+  if (contractId.length <= 10) return contractId;
+  return `${contractId.slice(0, 4)}...${contractId.slice(-4)}`;
+}
 
 export default function EscrowDashboardClient({ contractId }: Props) {
   const { contractState, isLoading, error, refresh } = useContractPolling(contractId);
@@ -130,6 +136,8 @@ export default function EscrowDashboardClient({ contractId }: Props) {
       })
     : null;
 
+  const truncatedContractId = formatContractId(contractId);
+
   return (
     <main id="main-content" className="min-h-screen pt-32 pb-24 relative overflow-hidden bg-[#07070a]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(92,124,250,0.1),transparent_50%)] pointer-events-none" />
@@ -172,8 +180,9 @@ export default function EscrowDashboardClient({ contractId }: Props) {
             </div>
             <div className="flex items-center gap-3">
               <p className="text-[10px] text-dark-500 font-black uppercase tracking-widest truncate max-w-[140px] md:max-w-none font-mono">
-                CX: {contractId}
+                CX: {truncatedContractId}
               </p>
+              <CopyButton value={contractId} label="Copy full contract ID" />
               <a
                 href={getExplorerLink("contract", contractId)}
                 target="_blank"

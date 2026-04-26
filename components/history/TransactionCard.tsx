@@ -31,13 +31,14 @@ interface TransactionCardProps {
    * Transaction data to display.
    */
   transaction: Transaction;
+  isNew?: boolean;
 }
 
 /**
  * A card component that displays an individual transaction's details.
  * Features specialized icons and color schemes based on the transaction type.
  */
-export default function TransactionCard({ transaction }: TransactionCardProps) {
+export default function TransactionCard({ transaction, isNew = false }: TransactionCardProps) {
   const explorerLink = useMemo(() => {
     try {
       return getExplorerLink("transaction", transaction.txHash);
@@ -95,14 +96,21 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
             <p className="text-[10px] text-dark-500 uppercase tracking-widest font-black truncate">
               {config.label}
             </p>
-            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border border-white/5 ${
-              transaction.status === "success" ? "bg-accent-500/10 text-accent-300" : 
-              transaction.status === "pending" ? "bg-blue-500/10 text-blue-300" : "bg-red-500/10 text-red-300"
-            }`}>
-              {transaction.status === "pending" ? <Clock className="h-2.5 w-2.5 animate-spin" /> : 
-               transaction.status === "failed" ? <AlertCircle className="h-2.5 w-2.5" /> : 
-               <CheckCircle2 className="h-2.5 w-2.5" />}
-              {transaction.status}
+            <div className="flex items-center gap-2">
+              {isNew && (
+                <span className="inline-flex items-center rounded-full border border-brand-400/40 bg-brand-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter text-brand-200 animate-in fade-in duration-300">
+                  New
+                </span>
+              )}
+              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border border-white/5 ${
+                transaction.status === "success" ? "bg-accent-500/10 text-accent-300" :
+                transaction.status === "pending" ? "bg-blue-500/10 text-blue-300" : "bg-red-500/10 text-red-300"
+              }`}>
+                {transaction.status === "pending" ? <Clock className="h-2.5 w-2.5 animate-spin" /> :
+                 transaction.status === "failed" ? <AlertCircle className="h-2.5 w-2.5" /> :
+                 <CheckCircle2 className="h-2.5 w-2.5" />}
+                {transaction.status}
+              </div>
             </div>
           </div>
           <h4 className={`text-xl font-black tracking-tight mt-0.5 ${config.color}`}>

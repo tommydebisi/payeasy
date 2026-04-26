@@ -3,10 +3,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, LogOut, Copy, Check, ChevronDown, ExternalLink, AlertCircle, Coins } from "lucide-react";
+import { Wallet, LogOut, Copy, Check, ChevronDown, ExternalLink, AlertCircle, Coins, AlertTriangle } from "lucide-react";
 import { useStellarAuth } from "@/context/StellarContext";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
+import { getCurrentNetwork } from "@/lib/stellar/config";
+import { getFreighterNetwork, isWalletNetworkMismatch } from "@/lib/stellar/wallet";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -19,7 +22,10 @@ function useIsMobile() {
   }, []);
   return isMobile;
 }
-import { useWalletBalance } from "@/hooks/useWalletBalance";
+
+function toDisplayNetworkName(network: "TESTNET" | "MAINNET"): string {
+  return network === "MAINNET" ? "Mainnet" : "Testnet";
+}
 
 export default function ConnectWalletButton() {
   const { publicKey, isConnected, connect, disconnect, isConnecting, isFreighterInstalled, isRestoring, error } = useStellarAuth();
@@ -27,10 +33,17 @@ export default function ConnectWalletButton() {
   const [copied, setCopied] = useState(false);
   const [errorExpanded, setErrorExpanded] = useState(false);
   const { balance, isLoading: isBalanceLoading } = useWalletBalance(publicKey, isOpen);
+  const [walletNetwork, setWalletNetwork] = useState<"TESTNET" | "MAINNET" | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
   const isMobile = useIsMobile();
+  const appNetwork = getCurrentNetwork();
+
+  const hasNetworkMismatch = isWalletNetworkMismatch(walletNetwork, appNetwork);
+  const mismatchMessage = hasNetworkMismatch
+    ? `Wallet is on ${toDisplayNetworkName(walletNetwork!)}, app uses ${toDisplayNetworkName(appNetwork === "mainnet" ? "MAINNET" : "TESTNET")}.`
+    : "";
 
   const truncatedKey = publicKey
     ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}`
@@ -65,6 +78,27 @@ export default function ConnectWalletButton() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMobile]);
+
+  useEffect(() => {
+    if (!isConnected) {
+      setWalletNetwork(null);
+      return;
+    }
+
+    let mounted = true;
+    const loadNetwork = async () => {
+      const current = await getFreighterNetwork();
+      if (mounted) {
+        setWalletNetwork(current);
+      }
+    };
+
+    void loadNetwork();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isConnected]);
 
   if (isRestoring) {
     return (
@@ -157,7 +191,7 @@ export default function ConnectWalletButton() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="glass-button flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/10 hover:bg-white/5 transition-all"
+        className="relative glass-button flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/10 hover:bg-white/5 transition-all"
       >
         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
         <span className="text-sm font-medium text-white font-mono">{truncatedKey}</span>
@@ -165,6 +199,15 @@ export default function ConnectWalletButton() {
           size={16}
           className={`text-dark-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
         />
+        {hasNetworkMismatch && (
+          <span
+            title={mismatchMessage}
+            className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-300/40 bg-amber-500 text-[10px] font-black text-black shadow-lg shadow-amber-500/20"
+            aria-label={mismatchMessage}
+          >
+            <AlertTriangle className="h-3 w-3" />
+          </span>
+        )}
       </button>
 
       {/* Desktop dropdown */}

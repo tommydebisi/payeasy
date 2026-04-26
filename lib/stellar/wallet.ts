@@ -158,7 +158,7 @@ export async function getFreighterNetwork(): Promise<"TESTNET" | "MAINNET" | nul
     const freighterModule = await import("@stellar/freighter-api");
     if (typeof freighterModule.getNetwork === "function") {
       const networkResult = await freighterModule.getNetwork();
-      return networkResult.network.toUpperCase() as "TESTNET" | "MAINNET";
+      return normalizeFreighterNetwork(networkResult.network);
     } else {
       // Fallback: if getNetwork is not available, we cannot determine the network
       return null;
@@ -167,4 +167,26 @@ export async function getFreighterNetwork(): Promise<"TESTNET" | "MAINNET" | nul
     console.error("Failed to get Freighter network:", error);
     return null;
   }
+}
+
+export function normalizeFreighterNetwork(
+  network: string | null | undefined
+): "TESTNET" | "MAINNET" | null {
+  const normalized = String(network ?? "").trim().toLowerCase();
+
+  if (normalized === "testnet") return "TESTNET";
+  if (normalized === "mainnet" || normalized === "public" || normalized === "pubnet") {
+    return "MAINNET";
+  }
+
+  return null;
+}
+
+export function isWalletNetworkMismatch(
+  walletNetwork: "TESTNET" | "MAINNET" | null,
+  appNetwork: "testnet" | "mainnet"
+): boolean {
+  if (!walletNetwork) return false;
+  const app = appNetwork === "testnet" ? "TESTNET" : "MAINNET";
+  return walletNetwork !== app;
 }

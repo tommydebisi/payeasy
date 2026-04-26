@@ -2,39 +2,37 @@
 
 import { useState } from "react";
 import TransactionCard, { type Transaction } from "./TransactionCard";
-import { Search, Filter, ArrowRight, ArrowLeft } from "lucide-react";
+import { Search, Filter, Loader2 } from "lucide-react";
 
 interface TransactionListProps {
-  /**
-   * Initial list of transactions to display.
-   */
-  initialTransactions: Transaction[];
+  transactions: Transaction[];
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+  newBadgeHashes?: string[];
 }
 
 /**
  * A container component for displaying a filtered and paginated list of transactions.
  * Features search and filter UI components for enhanced usability.
  */
-export default function TransactionList({ initialTransactions }: TransactionListProps) {
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 6;
-  
+export default function TransactionList({
+  transactions,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
+  newBadgeHashes = [],
+}: TransactionListProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Basic filtering for demo purposes
-  const filteredTransactions = initialTransactions.filter(tx => 
+  const filteredTransactions = transactions.filter(tx =>
     tx.txHash.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tx.amount.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tx.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1;
-  const safePage = Math.min(page, totalPages);
-
-  const paginatedTransactions = filteredTransactions.slice(
-    (safePage - 1) * itemsPerPage,
-    safePage * itemsPerPage
-  );
+  const showPaginationStatus = searchQuery.trim().length === 0;
 
   return (
     <div className="space-y-6">
@@ -50,7 +48,6 @@ export default function TransactionList({ initialTransactions }: TransactionList
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setPage(1);
             }}
             className="w-full bg-dark-900/50 border border-white/10 rounded-xl py-3 pl-11 pr-5 text-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-dark-600 transition-all font-medium"
           />
@@ -68,10 +65,14 @@ export default function TransactionList({ initialTransactions }: TransactionList
       </div>
 
       {/* Grid Display */}
-      {paginatedTransactions.length > 0 ? (
+      {filteredTransactions.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {paginatedTransactions.map((tx) => (
-            <TransactionCard key={tx.id} transaction={tx} />
+          {filteredTransactions.map((tx) => (
+            <TransactionCard
+              key={tx.id}
+              transaction={tx}
+              isNew={newBadgeHashes.includes(tx.txHash)}
+            />
           ))}
         </div>
       ) : (
@@ -84,48 +85,35 @@ export default function TransactionList({ initialTransactions }: TransactionList
         </div>
       )}
 
-      {/* Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-10 border-t border-white/5">
-        <p className="text-[11px] text-dark-500 uppercase tracking-widest font-black">
-          Page <span className="text-brand-400 px-1">{safePage}</span> of <span className="text-dark-200 px-1">{totalPages}</span> — {filteredTransactions.length} Total
-        </p>
-        
-        <div className="flex items-center gap-3 bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={safePage === 1}
-            className="p-3 rounded-xl bg-dark-900/50 text-dark-400 border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed hover:bg-brand-500/10 hover:text-brand-400 transition-all active:scale-95"
-            aria-label="Previous Page"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          
-          <div className="hidden sm:flex items-center gap-1.5 px-3">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setPage(i + 1)}
-                className={`h-10 w-10 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 ${
-                  safePage === i + 1 
-                    ? "bg-brand-500 text-white shadow-[0_4px_20px_rgba(76,110,245,0.4)] scale-110" 
-                    : "bg-white/5 text-dark-400 hover:bg-white/10"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
+      {showPaginationStatus && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-10 border-t border-white/5">
+          <p className="text-[11px] text-dark-500 uppercase tracking-widest font-black">
+            Showing <span className="text-brand-400 px-1">{transactions.length}</span> Transactions
+          </p>
 
-          <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={safePage === totalPages}
-            className="p-3 rounded-xl bg-dark-900/50 text-dark-400 border border-white/5 disabled:opacity-20 disabled:cursor-not-allowed hover:bg-brand-500/10 hover:text-brand-400 transition-all active:scale-95"
-            aria-label="Next Page"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          {hasMore ? (
+            <button
+              type="button"
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="btn-secondary !py-3 !px-7 !rounded-xl !text-xs disabled:opacity-60"
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Load more"
+              )}
+            </button>
+          ) : (
+            <p className="text-xs text-dark-400 font-semibold uppercase tracking-widest">
+              All transactions loaded
+            </p>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

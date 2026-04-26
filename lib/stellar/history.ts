@@ -133,6 +133,61 @@ export interface TransactionHistoryPager {
 const DEFAULT_LIMIT = 20;
 const DEFAULT_ORDER = "desc" as const;
 
+const HORIZON_BASE_URLS = {
+  testnet: "https://horizon-testnet.stellar.org",
+  mainnet: "https://horizon.stellar.org",
+} as const;
+
+type HistoryNetwork = keyof typeof HORIZON_BASE_URLS;
+
+export interface FetchLike {
+  (input: string, init?: RequestInit): Promise<Response>;
+}
+
+export interface CreateHorizonClientOptions {
+  baseUrl?: string;
+  network?: HistoryNetwork;
+  fetchFn?: FetchLike;
+}
+
+export function createHorizonClient(
+  options: CreateHorizonClientOptions = {}
+): HorizonClient {
+  const fetchFn = options.fetchFn ?? fetch;
+  const network = options.network ?? (process.env.NEXT_PUBLIC_STELLAR_NETWORK === "mainnet" ? "mainnet" : "testnet");
+  const baseUrl = (options.baseUrl ?? HORIZON_BASE_URLS[network]).replace(/\/$/, "");
+
+  return {
+    async fetchTransactions(accountId, params) {
+      const query = new URLSearchParams();
+      if (params.cursor) query.set("cursor", params.cursor);
+      if (params.limit !== undefined) query.set("limit", String(params.limit));
+      if (params.order) query.set("order", params.order);
+
+      const response = await fetchFn(
+        `${baseUrl}/accounts/${encodeURIComponent(accountId)}/transactions?${query.toString()}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch transactions (${response.status}).`);
+      }
+      return (await response.json()) as HorizonTransactionPage;
+    },
+
+    async fetchOperations(txHash, params) {
+      const query = new URLSearchParams();
+      if (params.limit !== undefined) query.set("limit", String(params.limit));
+
+      const response = await fetchFn(
+        `${baseUrl}/transactions/${encodeURIComponent(txHash)}/operations?${query.toString()}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch operations (${response.status}).`);
+      }
+      return (await response.json()) as HorizonOperationPage;
+    },
+  };
+}
+
 // ─── Core functions ───────────────────────────────────────────────────────────
 
 /**
