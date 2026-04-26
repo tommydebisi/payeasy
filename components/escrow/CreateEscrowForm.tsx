@@ -496,12 +496,12 @@ export default function CreateEscrowForm({
                 setDraft((current) => ({ ...current, deadlineDate: event.target.value }));
                 if (event.target.value) clearFieldError("deadlineDate");
               }}
-              aria-describedby={fieldErrors.deadlineDate ? "deadline-date-error" : undefined}
+              aria-describedby={[fieldErrors.deadlineDate ? "deadline-date-error" : undefined, "deadline-helper"].filter(Boolean).join(" ") || undefined}
               aria-invalid={!!fieldErrors.deadlineDate}
               className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-dark-100 focus:outline-none transition-colors ${fieldBorderClass(fieldErrors.deadlineDate, !!draft.deadlineDate)}`}
             />
             <FieldError id="deadline-date-error" message={fieldErrors.deadlineDate} />
-            <p className="text-sm text-dark-500">
+            <p id="deadline-helper" className="text-sm text-dark-500">
               Ledger timestamp: {deadlineLedgerTimestamp ?? "-"}
             </p>
           </div>

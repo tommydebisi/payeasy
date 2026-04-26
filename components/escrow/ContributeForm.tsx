@@ -117,10 +117,15 @@ export default function ContributeForm({
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              aria-invalid={!isValid && parseFloat(amount) > 0}
+              aria-describedby={[
+                !isValid && parseFloat(amount) > 0 ? "amount-error" : undefined,
+                "amount-helper"
+              ].filter(Boolean).join(" ") || undefined}
               className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-4 pr-12 text-lg font-bold text-dark-100 focus:border-brand-400 focus:outline-none transition-all group-hover:bg-white/[0.08]"
               placeholder="0.00"
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-500 font-black text-sm">
+            <div id="amount-helper" className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-500 font-black text-sm">
               XLM
             </div>
           </div>
@@ -138,7 +143,7 @@ export default function ContributeForm({
       </div>
 
   {!isValid && parseFloat(amount) > 0 && (
-    <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-2">
+    <div id="amount-error" role="alert" className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-2">
       <ArrowRight className="h-3 w-3 rotate-180" />
       {validation.error}
     </div>
