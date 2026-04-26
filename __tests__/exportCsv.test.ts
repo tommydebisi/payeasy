@@ -33,10 +33,12 @@ const MOCK_TRANSACTIONS: Transaction[] = [
 describe("exportTransactionsToCsv", () => {
   let blobContent: string | null = null;
   let clickedElement: any = null;
+  let createElementMock: any = null;
 
   beforeEach(() => {
     blobContent = null;
     clickedElement = null;
+    createElementMock = null;
 
     // Mock global objects needed for browser download simulation
     global.Blob = class BlobMock {
@@ -60,8 +62,9 @@ describe("exportTransactionsToCsv", () => {
       }),
     };
 
+    createElementMock = mock.fn(() => mockElement);
     global.document = {
-      createElement: mock.fn(() => mockElement),
+      createElement: createElementMock,
       body: {
         appendChild: mock.fn(),
         removeChild: mock.fn(),
@@ -101,7 +104,7 @@ describe("exportTransactionsToCsv", () => {
 
     // 2. Verify download triggered
     assert.equal(
-      global.document.createElement.mock.calls[0].arguments[0],
+      createElementMock.mock.calls[0].arguments[0],
       "a",
       "Should create an anchor element"
     );
