@@ -256,7 +256,6 @@ function parseBoolRetval(retval: unknown): boolean {
   );
 }
 
-// ─── Contract state ───────────────────────────────────────────────────────────
 // ─── Full contract state ──────────────────────────────────────────────────────
 
 export interface ContractState {

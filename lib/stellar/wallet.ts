@@ -1,7 +1,13 @@
-// @stellar/freighter-api is a CJS module; default import avoids Node ESM named-export error
 import freighterApi from "@stellar/freighter-api";
-const { isConnected, isAllowed, setAllowed, requestAccess, getAddress, signTransaction } =
-  freighterApi as typeof import("@stellar/freighter-api");
+
+const {
+  isConnected,
+  isAllowed,
+  setAllowed,
+  requestAccess,
+  getAddress,
+  signTransaction,
+} = freighterApi;
 import { getCurrentNetwork } from "./config.ts";
 
 /**
@@ -87,6 +93,7 @@ export async function signTx(xdr: string, network?: string): Promise<string | nu
   }
 }
 
+
 /**
  * Returns the installed Freighter extension version string (e.g. "12.1.0"),
  * or null if Freighter is not installed or the version cannot be determined.
@@ -150,17 +157,14 @@ export async function isFreighterVersionSupported(): Promise<boolean | null> {
 export async function getFreighterNetwork(): Promise<"TESTNET" | "MAINNET" | null> {
   if (typeof window === "undefined") return null;
   try {
-    // Check if Freighter is connected
     const connected = await isConnected();
     if (!connected.isConnected) return null;
 
-    // Try to get the network from the Freighter API
     const freighterModule = await import("@stellar/freighter-api");
     if (typeof freighterModule.getNetwork === "function") {
       const networkResult = await freighterModule.getNetwork();
       return normalizeFreighterNetwork(networkResult.network);
     } else {
-      // Fallback: if getNetwork is not available, we cannot determine the network
       return null;
     }
   } catch (error) {

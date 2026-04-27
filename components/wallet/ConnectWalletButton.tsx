@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, LogOut, Copy, Check, ChevronDown, ExternalLink, AlertCircle, Coins, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
+import { Wallet, LogOut, Copy, Check, ChevronDown, ExternalLink, AlertCircle, Loader2, Coins, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
 import { useStellarAuth } from "@/context/StellarContext";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -124,7 +124,7 @@ export default function ConnectWalletButton() {
   if (!isConnected) {
     return (
       <div className="flex flex-col items-end gap-1">
-        <button
+        <motion.button
           onClick={() => {
             if (!isFreighterInstalled) {
               router.push("/connect");
@@ -133,11 +133,31 @@ export default function ConnectWalletButton() {
             }
           }}
           disabled={isConnecting}
-          className="btn-primary !py-2.5 !px-5 !text-sm !rounded-lg flex items-center gap-2 group transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+          animate={
+            isConnecting
+              ? {
+                  boxShadow: [
+                    "0 0 0 1px rgba(92,124,250,0.3)",
+                    "0 0 0 2px rgba(92,124,250,0.7), 0 0 12px rgba(32,201,151,0.3)",
+                    "0 0 0 1px rgba(92,124,250,0.3)",
+                  ],
+                }
+              : { boxShadow: "0 0 0 0px rgba(0,0,0,0)" }
+          }
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className={`btn-primary !py-2.5 !px-5 !text-sm !rounded-lg flex items-center gap-2 transition-all ${
+            isConnecting
+              ? "opacity-70 cursor-not-allowed"
+              : "group hover:scale-105 active:scale-95"
+          }`}
         >
-          <Wallet size={16} className="group-hover:rotate-12 transition-transform" />
+          {isConnecting ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Wallet size={16} className="group-hover:rotate-12 transition-transform" />
+          )}
           {isConnecting ? "Connecting..." : "Connect Wallet"}
-        </button>
+        </motion.button>
 
         {error && (
           <div className="text-right max-w-[220px]">
