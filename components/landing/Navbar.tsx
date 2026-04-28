@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ConnectWalletButton from "@/components/wallet/ConnectWalletButton";
 import { useActiveSection } from "@/hooks/useActiveSection";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function Navbar() {
   const router = useRouter();
@@ -81,6 +82,7 @@ export default function Navbar() {
             Connect Wallet
           </a>
           <ConnectWalletButton />
+          <ThemeToggle />
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -119,8 +121,9 @@ export default function Navbar() {
               <Wallet size={16} />
               Connect Wallet
             </a>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
               <ConnectWalletButton />
+              <ThemeToggle />
             </div>
           </div>
         </div>

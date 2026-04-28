@@ -452,3 +452,66 @@ function stroopsToXlm(stroops: string): string {
   const fractionStr = fraction.toString().padStart(7, "0").replace(/0+$/, "");
   return fractionStr.length > 0 ? `${whole}.${fractionStr}` : whole.toString();
 }
+
+// ─── User Escrows (Mocked) ───────────────────────────────────────────────────
+
+export async function getUserEscrows(publicKey: string): Promise<ContractState[]> {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  // Mocked list of escrows for the connected wallet
+  return [
+    {
+      id: "ESCROW_A1B2C3D4",
+      landlord: "GDX7F2UWKYY3Q5Z3B6L4D7U7Y3T5X2J6K7L8M9N0P1Q2R3S4T5U6V7W8",
+      totalRent: "1500",
+      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+        year: "numeric", month: "short", day: "numeric"
+      }),
+      deadlineEpoch: Math.floor(Date.now() / 1000) + 5 * 24 * 60 * 60,
+      status: "active",
+      totalFunded: 750,
+      lastUpdate: new Date().toISOString(),
+      roommates: [
+        {
+          address: publicKey,
+          expectedShare: "750",
+          paidAmount: "750",
+          isPaid: true
+        },
+        {
+          address: "GBY4H3...9K2L",
+          expectedShare: "750",
+          paidAmount: "0",
+          isPaid: false
+        }
+      ]
+    },
+    {
+      id: "ESCROW_X9Y8Z7W6",
+      landlord: "GDX7F2UWKYY3Q5Z3B6L4D7U7Y3T5X2J6K7L8M9N0P1Q2R3S4T5U6V7W8",
+      totalRent: "2000",
+      deadline: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+        year: "numeric", month: "short", day: "numeric"
+      }),
+      deadlineEpoch: Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60,
+      status: "funded",
+      totalFunded: 2000,
+      lastUpdate: new Date().toISOString(),
+      roommates: [
+        {
+          address: publicKey,
+          expectedShare: "1000",
+          paidAmount: "1000",
+          isPaid: true
+        },
+        {
+          address: "GBY4H3...9K2L",
+          expectedShare: "1000",
+          paidAmount: "1000",
+          isPaid: true
+        }
+      ]
+    }
+  ];
+}
