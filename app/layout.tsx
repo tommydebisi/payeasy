@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "@/lib/env";
 import { AppShell } from "@/components/ui/app-shell";
+import { PageTransition } from "@/components/ui/page-transition";
 import { StellarProvider } from "@/context/StellarContext";
 import "./globals.css";
 
@@ -56,7 +57,9 @@ export default function RootLayout({
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans`}
       >
         <StellarProvider>
-          <AppShell>{children}</AppShell>
+          <AppShell>
+            <PageTransition>{children}</PageTransition>
+          </AppShell>
         </StellarProvider>
       </body>
     </html>
